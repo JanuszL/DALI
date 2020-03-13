@@ -24,6 +24,7 @@ project(DALI CUDA CXX C)
 set(DALI_ROOT ${PROJECT_SOURCE_DIR})
 
 # Build options
+option(DYNAMIC_CUDA "Link to CUDA dynamically" OFF)
 option(BUILD_TEST "Build googletest test suite" ON)
 option(BUILD_BENCHMARK "Build benchmark suite" ON)
 option(BUILD_NVTX "Build with NVTX profiling enabled" OFF)

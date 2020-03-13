@@ -18,7 +18,7 @@ package:
   version: {{ environ.get('DALI_CONDA_BUILD_VERSION', '') }}
 
 source:
-  # Beware: Only commited files are used
+  # Beware: Only committed files are used
   - git_url: ../..
 
 build:
@@ -48,6 +48,8 @@ build:
    - LD_LIBRARY_PATH
    - DALI_CONDA_BUILD_VERSION
    - CUDA_VERSION
+   - CUDA_MAJOR
+   - CUDA_MINOR
   string: py{{ python | replace(".","") }}_{{ environ.get('NVIDIA_BUILD_ID', '') }}
 
 requirements:
@@ -59,6 +61,7 @@ requirements:
     - cmake >=3.12.4
     - make
     - patchelf
+    - nvcc_linux-64 =={{ environ.get('CUDA_MAJOR', '') }}.{{ environ.get('CUDA_MINOR', '') }}
   host:
     - python
     - future >=0.17.1
@@ -71,6 +74,7 @@ requirements:
     - lmdb >=0.9.22
     - libtiff >=4.0
     - libsndfile >=1.0.28
+    - cudatoolkit =={{ environ.get('CUDA_MAJOR', '') }}.{{ environ.get('CUDA_MINOR', '') }}
   run:
     - python
     - future >=0.17.1
@@ -80,3 +84,4 @@ requirements:
     - lmdb >=0.9.22
     - libtiff >=4.0
     - libsndfile >=1.0.28
+    - cudatoolkit =={{ environ.get('CUDA_MAJOR', '') }}.{{ environ.get('CUDA_MINOR', '') }}

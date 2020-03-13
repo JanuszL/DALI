@@ -35,29 +35,27 @@ ln -s $CXX $BUILD_PREFIX/bin/g++
 # Force -std=c++14 in CXXFLAGS
 export CXXFLAGS=${CXXFLAGS/-std=c++??/-std=c++14}
 
-# For some reason `aligned_alloc` is present when we use compiler version 5.4.x
-# Adding NO_ALIGNED_ALLOC definition for cutt
-export CXXFLAGS="${CXXFLAGS} -DNO_ALIGNED_ALLOC"
-export PATH=/usr/local/cuda/bin:${PATH}
+# CUDA_HOME is set by nvcc package
 
 # For some reason `aligned_alloc` is present when we use compiler version 5.4.x
 # Adding NO_ALIGNED_ALLOC definition for cutt
 export CXXFLAGS="${CXXFLAGS} -DNO_ALIGNED_ALLOC"
-export PATH=/usr/local/cuda/bin:${PATH}
+export PATH=$CUDA_HOME/bin:${PATH}
 
 # Create build directory for cmake and enter it
 mkdir $SRC_DIR/build
 cd $SRC_DIR/build
 # Build
-cmake -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda \
+cmake -DCUDA_TOOLKIT_ROOT_DIR=$CUDA_HOME\
       -DCUDA_rt_LIBRARY=$BUILD_PREFIX/${ARCH_LONGNAME}-linux-gnu/sysroot/usr/lib/librt.so \
-      -DCUDA_CUDA_LIBRARY=/usr/local/cuda/targets/${ARCH}-linux/lib/stubs/libcuda.so \
+      -DCUDA_CUDA_LIBRARY=$CUDA_HOME/targets/${ARCH}-linux/lib/stubs/libcuda.so \
       -DCUDA_TARGET_ARCHS=${CUDA_TARGET_ARCHS}            \
-      -DNVJPEG_ROOT_DIR=/usr/local/cuda                   \
+      -DNVJPEG_ROOT_DIR=$CUDA_HOME                   \
       -DFFMPEG_ROOT_DIR=$PREFIX/lib                       \
       -DCMAKE_PREFIX_PATH="$PREFIX/libjpeg-turbo;$PREFIX" \
       -DCMAKE_INSTALL_PREFIX=$PREFIX                      \
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release}     \
+      -DDYNAMIC_CUDA=ON                                   \
       -DBUILD_TEST=${BUILD_TEST:-ON}                      \
       -DBUILD_BENCHMARK=${BUILD_BENCHMARK:-ON}            \
       -DBUILD_NVTX=${BUILD_NVTX:-OFF}                     \

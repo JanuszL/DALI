@@ -8,13 +8,15 @@ if [ -z $PYVER ]; then
     exit 1
 fi
 
-export CUDA_VERSION=$(echo $(ls /usr/local/cuda/lib64/libcudart.so*)  | sed 's/.*\.\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)/\1\2/')
+export CUDA_MAJOR=10
+export CUDA_MINOR=2
+export CUDA_VERSION=$CUDA_MAJOR$CUDA_MINOR
 
 # Adding conda-forge channel for dependencies
+conda config --add channels nvidia
 conda config --add channels conda-forge
 
 CONDA_BUILD_OPTIONS="--python=${PYVER} --exclusive-config-file config/conda_build_config.yaml"
-#CONDA_BUILD_OPTIONS="--exclusive-config-file config/conda_build_config.yaml"
 
 CONDA_PREFIX=${CONDA_PREFIX:-/root/miniconda3}
 
