@@ -112,7 +112,6 @@ class DLL_PUBLIC Executor : public ExecutorBase, public WorkspacePolicy, public 
         gpu_op_stream_(0),
         enable_memory_stats_(false) {
     DALI_ENFORCE(batch_size_ > 0, "Batch size must be greater than 0.");
-    DALI_ENFORCE(device_id >= 0, "Device id must be non-negative.");
 
     stage_queue_depths_ = QueuePolicy::GetQueueSizes(prefetch_queue_depth);
   }
@@ -398,7 +397,7 @@ void Executor<WorkspacePolicy, QueuePolicy>::Build(OpGraph *graph, vector<string
   // Create corresponding storage type for TensorNodes in graph
   tensor_to_store_queue_ = CreateBackingStorageForTensorNodes(*graph_, batch_size_, queue_sizes);
   // Setup stream and events that will be used for execution
-  {
+  if (device_id_ >= 0) {
     DeviceGuard g(device_id_);
     mixed_op_stream_ = stream_pool_.GetStream();
     gpu_op_stream_ = stream_pool_.GetStream();
@@ -476,7 +475,11 @@ void Executor<WorkspacePolicy, QueuePolicy>::RunMixed() {
 
   // Enforce our assumed dependency between consecutive
   // iterations of a stage of the pipeline.
-  CUDA_CALL(cudaEventSynchronize(mixed_stage_event_));
+
+  // for the CPU only pipeline
+  if (device_id_ >= 0) {
+    CUDA_CALL(cudaEventSynchronize(mixed_stage_event_));
+  }
 
   try {
     for (int i = 0; i < graph_->NumOp(OpType::MIXED); ++i) {
@@ -488,7 +491,7 @@ void Executor<WorkspacePolicy, QueuePolicy>::RunMixed() {
       RunHelper(op_node, ws);
       FillStats(mixed_memory_stats_, ws,  "MIXED_" + op_node.instance_name,
                 mixed_memory_stats_mutex_);
-      if (ws.has_stream() && ws.has_event()) {
+      if (ws.has_stream() && ws.has_event() && device_id_ >= 0) {
         CUDA_CALL(cudaEventRecord(ws.event(), ws.stream()));
       }
     }
@@ -501,19 +504,26 @@ void Executor<WorkspacePolicy, QueuePolicy>::RunMixed() {
   if (callback_) {
     // Record event that will allow to call the callback after whole run of this pipeline is
     // finished.
-    CUDA_CALL(cudaEventRecord(mixed_callback_events_[mixed_idxs[OpType::MIXED]], mixed_op_stream_));
+    if (device_id_ >= 0) {
+      CUDA_CALL(cudaEventRecord(mixed_callback_events_[mixed_idxs[OpType::MIXED]], mixed_op_stream_));
+    }
   }
 
-  if (!mixed_output_events_.empty()) {
-    int queue_id = mixed_idxs[OpType::MIXED];
-    CUDA_CALL(cudaEventRecord(mixed_output_events_.GetEvent(queue_id), mixed_op_stream_));
-  }
+  if (device_id_ >= 0) {
+    if (!mixed_output_events_.empty()) {
+      int queue_id = mixed_idxs[OpType::MIXED];
+      CUDA_CALL(cudaEventRecord(mixed_output_events_.GetEvent(queue_id), mixed_op_stream_));
+    }
 
-  // We know that this is the proper stream, we do not need to look it up in any workspace
-  CUDA_CALL(cudaEventRecord(mixed_stage_event_, mixed_op_stream_));
+    // We know that this is the proper stream, we do not need to look it up in any workspace
+    CUDA_CALL(cudaEventRecord(mixed_stage_event_, mixed_op_stream_));
+  }
 
   // Pass the work to the gpu stage
   QueuePolicy::ReleaseIdxs(OpType::MIXED, mixed_idxs, mixed_op_stream_);
+  if (callback_ &&  device_id_ >= 0) {
+    callback_();
+  }
 }
 
 template <typename WorkspacePolicy, typename QueuePolicy>
@@ -523,6 +533,13 @@ void Executor<WorkspacePolicy, QueuePolicy>::RunGPU() {
   auto gpu_idxs = QueuePolicy::AcquireIdxs(OpType::GPU);
   if (exec_error_ || QueuePolicy::IsStopSignaled() || !QueuePolicy::AreValid(gpu_idxs)) {
     QueuePolicy::ReleaseIdxs(OpType::GPU, gpu_idxs);
+    return;
+  }
+
+  // short path for pure CPU pipeline
+  if (device_id_ < 0) {
+    // We do not release, but handle to used outputs
+    QueuePolicy::QueueOutputIdxs(gpu_idxs, gpu_op_stream_);
     return;
   }
   DeviceGuard g(device_id_);
@@ -752,12 +769,11 @@ void Executor<WorkspacePolicy, QueuePolicy>::PrepinData(
     for (int j = 0; j < node.spec.NumRegularInput(); ++j) {
       auto tid = node.parent_tensors[j];
       // Use pinned memory only when it is useful
-      if (node.spec.name() == "MakeContiguous" && node.spec.NumOutput() == 1 &&
-          node.spec.OutputDevice(0) == "gpu") {
+      if (node.spec.name() == "MakeContiguous" && node.spec.NumOutput() == 1) {
         auto &parent_tensor_queue =
             get_queue<OpType::CPU, StorageDevice::CPU>(tensor_to_store_queue_[tid]);
         for (auto &tensor : parent_tensor_queue) {
-          tensor->set_pinned(true);
+          tensor->set_pinned(node.spec.OutputDevice(0) == "gpu");
         }
       }
     }

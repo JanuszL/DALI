@@ -63,6 +63,11 @@ bool wrapHasCuda11NvmlFunctions() {
          nvmlInternalDeviceGetCudaComputeCapability && nvmlInternalDeviceGetBrand;
 }
 
+
+bool wrapIsInitialized(void) {
+  return symbolsLoaded;
+}
+
 DALIError_t wrapSymbols(void) {
   if (symbolsLoaded)
     return DALISuccess;
@@ -153,6 +158,9 @@ DALIError_t wrapNvmlInit(void) {
 }
 
 DALIError_t wrapNvmlShutdown(void) {
+  if (nvmlInternalInit == NULL) {
+    return DALISuccess;
+  }
   if (nvmlInternalShutdown == NULL) {
     DALI_FAIL("lib wrapper not initialized.");
     return DALIError;

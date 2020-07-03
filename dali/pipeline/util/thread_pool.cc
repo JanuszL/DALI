@@ -27,7 +27,10 @@ ThreadPool::ThreadPool(int num_thread, int device_id, bool set_affinity)
     : threads_(num_thread), running_(true), work_complete_(true), active_threads_(0) {
   DALI_ENFORCE(num_thread > 0, "Thread pool must have non-zero size");
 #if NVML_ENABLED
-  nvml::Init();
+  // only for the CPU pipeline
+  if (device_id >= 0) {
+    nvml::Init();
+  }
 #endif
   // Start the threads in the main loop
   for (int i = 0; i < num_thread; ++i) {

@@ -29,6 +29,7 @@ namespace dali {
 
 namespace nvml {
 
+DLL_PUBLIC bool wrapIsInitialized(void);
 DLL_PUBLIC DALIError_t wrapSymbols(void);
 
 DLL_PUBLIC DALIError_t wrapNvmlInit(void);

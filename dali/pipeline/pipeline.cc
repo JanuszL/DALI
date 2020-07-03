@@ -134,9 +134,12 @@ void Pipeline::Init(int batch_size, int num_threads, int device_id, int64_t seed
     this->prefetch_queue_depth_ = prefetch_queue_depth;
     DALI_ENFORCE(batch_size_ > 0, "Batch size must be greater than 0");
 
-    int lowest_cuda_stream_priority, highest_cuda_stream_priority;
-    CUDA_CALL(cudaDeviceGetStreamPriorityRange(&lowest_cuda_stream_priority,
-                                               &highest_cuda_stream_priority));
+    int lowest_cuda_stream_priority = 0, highest_cuda_stream_priority = 0;
+    // do it only for the GPU pipeline
+    if (device_id >= 0) {
+      CUDA_CALL(cudaDeviceGetStreamPriorityRange(&lowest_cuda_stream_priority,
+                                                 &highest_cuda_stream_priority));
+    }
     const auto min_priority_value =
         std::min(lowest_cuda_stream_priority, highest_cuda_stream_priority);
     const auto max_priority_value =
