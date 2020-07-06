@@ -470,7 +470,7 @@ void Pipeline::Build(vector<std::pair<string, string>> output_names) {
         // Add a make contiguous op to produce this output
         OpSpec spec =
           OpSpec("MakeContiguous")
-          .AddArg("device", "mixed")
+          .AddArg("device", "cpu")
           .AddInput(name, "cpu")
           .AddOutput("contiguous_" + name, "cpu");
         PrepareOpSpec(&spec, GetNextInternalLogicalId());
@@ -579,7 +579,7 @@ void Pipeline::SetupCPUInput(std::map<string, EdgeMeta>::iterator it, int input_
   if (!it->second.has_contiguous) {
     OpSpec make_contiguous_spec =
       OpSpec("MakeContiguous")
-      .AddArg("device", "mixed")
+      .AddArg("device", "cpu")
       .AddInput(it->first, "cpu")
       .AddOutput("contiguous_" + it->first, "cpu");
     // don't put it into op_specs_for_serialization_, only op_specs_
