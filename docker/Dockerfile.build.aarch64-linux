@@ -29,6 +29,20 @@ RUN dpkg -i *.deb && \
    && rm -rf /var/lib/apt/lists/* \
    && rm -rf /tmp/cuda-packages.txt
 
+# zlib
+RUN LIBZ_VERSION=1.2.11 && \
+    cd /tmp && \
+    curl -L https://github.com/madler/zlib/archive/v${LIBZ_VERSION}.tar.gz | tar -xzf - && \
+    cd zlib-${LIBZ_VERSION} && \
+    CFLAGS="-fPIC" \
+    CXXFLAGS="-fPIC" \
+    CC=aarch64-linux-gnu-gcc \
+    CXX=aarch64-linux-gnu-g++ \
+    ./configure -prefix=/usr/aarch64-linux-gnu/ && \
+    make install -j"$(grep ^processor /proc/cpuinfo | wc -l)" && \
+    cd && \
+    rm -rf /tmp/zlib-${LIBZ_VERSION}
+
 # CMake
 RUN CMAKE_VERSION=3.13 && \
     CMAKE_BUILD=3.13.5 && \
@@ -56,12 +70,11 @@ RUN cd /protobuf-${PROTOBUF_VERSION} && make clean \
       --prefix=/usr/aarch64-linux-gnu/ && make -j$(nproc) install && \
     rm -rf /protobuf-${PROTOBUF_VERSION}
 
-
 # libjpeg-turbo
 RUN JPEG_TURBO_VERSION=2.0.5 && \
     curl -L https://github.com/libjpeg-turbo/libjpeg-turbo/archive/${JPEG_TURBO_VERSION}.tar.gz | tar -xzf - && \
     cd libjpeg-turbo-${JPEG_TURBO_VERSION} && \
-    echo "set(CMAKE_SYSTEM_NAME  Linux)" > toolchain.cmake && \
+    echo "set(CMAKE_SYSTEM_NAME Linux)" > toolchain.cmake && \
     echo "set(CMAKE_SYSTEM_PROCESSOR aarch64)" >> toolchain.cmake && \
     echo "set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)" >> toolchain.cmake && \
       CFLAGS="-fPIC" \
@@ -75,6 +88,20 @@ RUN JPEG_TURBO_VERSION=2.0.5 && \
       CXX=aarch64-linux-gnu-g++ \
     make -j"$(grep ^processor /proc/cpuinfo | wc -l)" install 2>&1 >/dev/null && \
     rm -rf /libjpeg-turbo-${JPEG_TURBO_VERSION}
+
+# zstd
+RUN LIBZSTD_VERSION=1.4.5 && \
+    cd /tmp && \
+    curl -L https://github.com/facebook/zstd/releases/download/v${LIBZSTD_VERSION}/zstd-${LIBZSTD_VERSION}.tar.gz | tar -xzf - && \
+    cd zstd-${LIBZSTD_VERSION} && \
+    CFLAGS="-fPIC" \
+    CXXFLAGS="-fPIC" \
+    CC=aarch64-linux-gnu-gcc \
+    CXX=aarch64-linux-gnu-g++ \
+    prefix=/usr/aarch64-linux-gnu \
+    make install -j"$(grep ^processor /proc/cpuinfo | wc -l)" && \
+    cd && \
+    rm -rf /tmp/zstd-${LIBZSTD_VERSION}
 
 # libtiff
 RUN LIBTIFF_VERSION=4.1.0 && \

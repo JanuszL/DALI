@@ -43,7 +43,6 @@ def main():
                         "librt.so.1",
                         "libstdc++.so.6",
                         "libgcc_s.so.1",
-                        "libz.so.1",
                         "liblzma.so.5"
                     ]}
 
