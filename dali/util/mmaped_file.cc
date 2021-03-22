@@ -112,7 +112,7 @@ fail:
 
 namespace dali {
 
-using MappedFile = std::tuple<std::weak_ptr<void>, size_t>;
+using MappedFile = std::tuple<std::shared_ptr<void>, size_t>;
 
 // limit to half of allowed mmaped files
 static const unsigned int dali_max_mv_cnt = get_max_vm_cnt() / 2;
@@ -128,14 +128,13 @@ std::map<std::string, MappedFile> mapped_files;
 MmapedFileStream::MmapedFileStream(const std::string& path, bool read_ahead) :
   FileStream(path), length_(0), pos_(0), read_ahead_whole_file_(read_ahead) {
   std::lock_guard<std::mutex> lock(mapped_files_mutex);
-  std::weak_ptr<void> mapped_memory;
+  std::shared_ptr<void> mapped_memory;
   std::tie(mapped_memory, length_) = mapped_files[path];
 
-  if (!(p_ = mapped_memory.lock())) {
+  if (!(p_ = mapped_memory)) {
     void *p = file_map(path.c_str(), &length_, read_ahead_whole_file_);
     size_t length_tmp = length_;
     p_ = shared_ptr<void>(p, [=](void*) {
-      // we are not touching mapped_files, weak_ptr is enough to check if
       // memory is valid or not
       munmap(p, length_tmp);
      });
