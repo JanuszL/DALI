@@ -4,7 +4,10 @@ FROM ${AARCH64_BASE_IMAGE}
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CUDA_CROSS_VERSION=10.2
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt update || true && apt install wget -y && \
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb && \
+    dpkg -i cuda-keyring* && rm -rf cuda-keyring* && \
+    apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     wget \
