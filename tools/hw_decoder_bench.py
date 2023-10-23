@@ -195,13 +195,11 @@ def vit_pipeline(is_training=False, image_shape=(384, 384, 3), num_classes=1000)
             saturation=saturation)
 
         # auto-augment
-        # `shape` controls the magnitude of the translation operations
         img = auto_augment.auto_augment_image_net(img)
     else:
         img = fn.resize(img, size=image_shape[:-1])
 
     # normalize
-    # https://github.com/NVIDIA/DALI/issues/4469
     mean = np.asarray([0.485, 0.456, 0.406])[None, None, :]
     std = np.asarray([0.229, 0.224, 0.225])[None, None, :]
     scale = 1 / 255.
