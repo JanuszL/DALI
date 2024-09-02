@@ -195,9 +195,10 @@ Additional Resources
 - GPU Technology Conference 2019; **Integration of DALI with TensorRT on Xavier**; Josh Park and Anurag Dixit:
   `slides <https://developer.download.nvidia.com/video/gputechconf/gtc/2019/presentation/s9818-integration-of-tensorrt-with-dali-on-xavier.pdf>`__,
   `recording <https://developer.nvidia.com/gtc/2019/video/S9818/video>`__.
-- GPU Technology Conference 2018; **Fast data pipeline for deep learning training**, T. Gale, S. Layton and P. Trędak:
-  `slides <http://on-demand.gputechconf.com/gtc/2018/presentation/s8906-fast-data-pipelines-for-deep-learning-training.pdf>`__,
+- GPU Technology Conference 2018; **Fast data pipeline for deep learning training**, T. Gale, S. Layton and P. Trędak,
+  `slides <http://on-demand.gputechconf.com/gtc/2018/presentation/s8906-fast-data-pipelines-for-deep-learning-training.pdf>`__.
   `recording <https://www.nvidia.com/en-us/on-demand/session/gtcsiliconvalley2018-s8906/>`__.
+- `NVAITC Webinar: Efficient Data Loading using DALI <https://www.youtube.com/watch?v=cu-M8I3YUxM>`__.
 - `Developer Page <https://developer.nvidia.com/DALI>`__.
 - `Blog Posts <https://developer.nvidia.com/blog/tag/dali/>`__.
 
